@@ -15,14 +15,42 @@ final class Init
     private ?Theme $theme = null;
     private Config $config;
     private array $pluginRegistry = [];
+    private PluginScanner $scanner;
+    public readonly array $pluginNav;
 
+    public array $nav2 = [
+        'Remotes',        
+        [
+            ['local',     '?o=remote&r=local',    'bi bi-globe fw'],
+            ['mgo',       '?o=remote&r=mgo',      'bi bi-globe fw'],
+        ], 
+        'bi bi-list fw'
+    ];
+    
     public function __construct(Config $config) 
     {
         $this->validateEnvironment();
         $this->initializeSession();
         $this->setupConfig($config);
+        $this->initializePluginNav();
         $this->initializeTheme();
         $this->executePlugin();
+    }
+
+    private function initializePluginNav(): void 
+    {
+        $this->scanner = new PluginScanner();
+        $this->pluginNav = $this->scanner->scanPlugins();
+    }
+
+    private function initializeTheme(): void 
+    {
+        $themeType = $this->config->in['theme'] ?? 'Default';
+        $themeClass = "Markc\\Pablo\\Themes\\{$themeType}\\Theme";
+        
+        $this->theme = class_exists($themeClass) 
+            ? new $themeClass($this->config, $this)  // Pass $this to Theme
+            : throw new \RuntimeException("Theme not found: {$themeClass}");
     }
 
     private function validateEnvironment(): void 
@@ -56,20 +84,10 @@ final class Init
         $this->config->sanitizeInput();
     }
 
-    private function initializeTheme(): void 
-    {
-        $themeType = $this->config->in['theme'] ?? 'Default';
-        $themeClass = "Markc\\Pablo\\Themes\\{$themeType}\\Theme";
-        
-        $this->theme = class_exists($themeClass) 
-            ? new $themeClass($this->config)
-            : throw new \RuntimeException("Theme not found: {$themeClass}");
-    }
-
     private function executePlugin(): void 
     {
-        $pluginName = $this->config->in['plugin'] ?? 'Home';  // Changed from empty string to 'Home'
-        
+        $pluginName = ucfirst(strtolower($this->config->in['plugin'] ?? 'Home'));
+ 
         $pluginClass = "Markc\\Pablo\\Plugins\\{$pluginName}\\Plugin";
         if (!class_exists($pluginClass)) {
             throw new PluginNotFoundException("Plugin not found: {$pluginClass}");

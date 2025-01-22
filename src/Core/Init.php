@@ -10,7 +10,7 @@ use Markc\Pablo\Exceptions\{
 };
 use Markc\Pablo\Interfaces\PluginInterface;
 
-final class Init 
+final class Init
 {
     private ?Theme $theme = null;
     private Config $config;
@@ -63,10 +63,12 @@ final class Init
     private function initializeSession(): void 
     {
         if (session_status() === PHP_SESSION_NONE) {
-            session_start([
+            session_start(
+                [
                 'cookie_httponly' => true,
                 'cookie_samesite' => 'Strict'
-            ]);
+                ]
+            );
         }
 
         if (!isset($_SESSION['csrf_token'])) {
@@ -111,8 +113,9 @@ final class Init
     
     private function validateApiRequest(): void 
     {
-        if (!isset($_SERVER['HTTP_X_CSRF_TOKEN']) || 
-            !hash_equals($_SESSION['csrf_token'], $_SERVER['HTTP_X_CSRF_TOKEN'])) {
+        if (!isset($_SERVER['HTTP_X_CSRF_TOKEN'])  
+            || !hash_equals($_SESSION['csrf_token'], $_SERVER['HTTP_X_CSRF_TOKEN'])
+        ) {
             throw new \RuntimeException('Invalid CSRF token');
         }
     }
@@ -141,7 +144,8 @@ final class Init
     private function renderJson(mixed $data): string 
     {
         header('Content-Type: application/json');
-        return json_encode($data, 
+        return json_encode(
+            $data, 
             JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
         );
     }
@@ -159,25 +163,29 @@ final class Init
     private function logDebugInfo(): void 
     {
         if ($_ENV['APP_DEBUG'] ?? false) {
-            error_log(sprintf(
-                "Request: %s\nGET: %s\nPOST: %s\nSESSION: %s",
-                $_SERVER['REQUEST_URI'],
-                var_export($_GET, true),
-                var_export($_POST, true),
-                var_export($_SESSION, true)
-            ));
+            error_log(
+                sprintf(
+                    "Request: %s\nGET: %s\nPOST: %s\nSESSION: %s",
+                    $_SERVER['REQUEST_URI'],
+                    var_export($_GET, true),
+                    var_export($_POST, true),
+                    var_export($_SESSION, true)
+                )
+            );
         }
     }
 
     public function __destruct() 
     {
         if ($_ENV['APP_DEBUG'] ?? false) {
-            error_log(sprintf(
-                "Request completed: %s %s %.4f seconds",
-                $_SERVER['REQUEST_URI'],
-                $_SERVER['REMOTE_ADDR'],
-                microtime(true) - $_SERVER['REQUEST_TIME_FLOAT']
-            ));
+            error_log(
+                sprintf(
+                    "Request completed: %s %s %.4f seconds",
+                    $_SERVER['REQUEST_URI'],
+                    $_SERVER['REMOTE_ADDR'],
+                    microtime(true) - $_SERVER['REQUEST_TIME_FLOAT']
+                )
+            );
         }
     }
 }

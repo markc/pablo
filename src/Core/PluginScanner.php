@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Markc\Pablo\Core;
 
-final class PluginScanner 
+final class PluginScanner
 {
     private string $pluginsDir;
     
@@ -20,7 +20,7 @@ final class PluginScanner
         return [
             'Plugins',
             array_map(
-                function($dir) {
+                function ($dir) {
                     $pluginName = basename($dir);
                     return [
                         $pluginName,

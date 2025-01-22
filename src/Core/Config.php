@@ -6,13 +6,14 @@ namespace Markc\Pablo\Core;
 
 use Markc\Pablo\Interfaces\ConfigInterface;
 
-class Config implements ConfigInterface 
+class Config implements ConfigInterface
 {
     public function __construct(
         public array $cfg = [],
         public array $in = [],
         public array $out = []
-    ) {}
+    ) {
+    }
 
     public function getConfig(): array 
     {

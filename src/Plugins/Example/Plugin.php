@@ -6,7 +6,7 @@ namespace Markc\Pablo\Plugins\Example;
 
 use Markc\Pablo\Core\Plugin as BasePlugin;
 
-class Plugin extends BasePlugin 
+class Plugin extends BasePlugin
 {
     public function execute(): mixed 
     {

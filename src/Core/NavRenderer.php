@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Markc\Pablo\Core;
 
-class NavRenderer 
+class NavRenderer
 {
     private Config $config;
 
@@ -21,11 +21,13 @@ class NavRenderer
 
         // Since plugins use a fixed structure [section_name, items_array, icon],
         // we treat it as a dropdown
-        return $this->renderDropdown([
+        return $this->renderDropdown(
+            [
             $navData[0],  // Section name (e.g., "Plugins")
             $navData[1],  // Array of plugin items
             $navData[2]   // Section icon
-        ]);
+            ]
+        );
     }
 
     private function renderDropdown(array $section): string 
@@ -34,7 +36,7 @@ class NavRenderer
         $icon = isset($section[2]) ? '<i class="' . $section[2] . '"></i> ' : '';
         
         $submenuItems = array_map(
-            function($item) use ($currentPlugin) {
+            function ($item) use ($currentPlugin) {
                 $isActive = strtolower($currentPlugin) === strtolower($item[0]) ? ' active' : '';
                 $itemIcon = isset($item[2]) ? '<i class="' . $item[2] . '"></i> ' : '';
                 

@@ -6,7 +6,7 @@ namespace Markc\Pablo\Core;
 
 use Markc\Pablo\Interfaces\PluginInterface;
 
-abstract class Plugin implements PluginInterface 
+abstract class Plugin implements PluginInterface
 {
     protected Theme $theme;
     protected array $data = [];

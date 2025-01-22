@@ -7,7 +7,7 @@ namespace Markc\Pablo\Plugins\Home;
 // Use absolute namespace path
 use \Markc\Pablo\Core\Plugin as BasePlugin;
 
-class Plugin extends BasePlugin 
+class Plugin extends BasePlugin
 {
     public function execute(): mixed 
     {

@@ -14,6 +14,8 @@ Pablo is a lightweight, modern PHP micro-framework designed with simplicity and 
 - **Minimal Dependencies**: Zero external dependencies for the core framework
 - **Debug Mode**: Comprehensive debug logging for development
 
+![The initial layout of the Default BS5 theme](./public/assets/img/20250123_Pablo_Screenshot.webp)
+
 ## Requirements
 
 - PHP 8.4 or higher

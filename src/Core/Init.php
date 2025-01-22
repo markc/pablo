@@ -82,7 +82,8 @@ final class Init
     {
         $this->config = $config;
         $this->config->cfg['host'] ??= $_SERVER['HTTP_HOST'];
-        $this->config->cfg['base_path'] = str_replace('index.php', '', $_SERVER['PHP_SELF']);
+        $this->config->cfg['base_path'] = ROOT;
+        $this->config->cfg['base_url'] = str_replace('index.php', '', $_SERVER['PHP_SELF']);
         $this->config->sanitizeInput();
     }
 

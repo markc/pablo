@@ -1,0 +1,6 @@
+{
+    "name": "Blog",
+    "description": "A blog plugin with datatable interface",
+    "icon": "bi bi-book fw",
+    "order": 3
+}

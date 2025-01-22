@@ -4,6 +4,8 @@
 
 use Markc\Pablo\Core\{Config, Init};
 
+define('ROOT', dirname(__DIR__));
+
 require_once __DIR__ . '/../vendor/autoload.php';
 
 try {

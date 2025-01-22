@@ -1,0 +1,6 @@
+{
+    "name": "Example Plugin",
+    "description": "An example plugin to demonstrate functionality",
+    "icon": "bi bi-code-square fw",
+    "order": 2
+}

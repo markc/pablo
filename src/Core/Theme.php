@@ -1,6 +1,6 @@
-<?php
-
-declare(strict_types=1);
+<?php declare(strict_types=1);
+// src/Core/Theme.php 20250122 - 20250122
+// Copyright (C) 2015-2025 Mark Constable <markc@renta.net> (AGPL-3.0)
 
 namespace Markc\Pablo\Core;
 
@@ -11,7 +11,6 @@ abstract class Theme implements ThemeInterface
 {
     protected Config $config;
     protected Init $init;
-    protected array $data = [];
 
     public function __construct(Config $config, Init $init) 
     {
@@ -19,13 +18,13 @@ abstract class Theme implements ThemeInterface
         $this->init = $init;
     }
 
-    public function lhsNav(): string
+    protected function lhsNav(): string
     {
         $navRenderer = new NavRenderer($this->config);
         return $navRenderer->renderPluginNav($this->init->pluginNav);
     }
 
-    public function rhsNav(): string
+    protected function rhsNav(): string
     {
         $navRenderer = new NavRenderer($this->config);
         return $navRenderer->renderPluginNav($this->init->nav2);
@@ -35,6 +34,13 @@ abstract class Theme implements ThemeInterface
 
     public function html(): string 
     {
+        $isAjax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+                  strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
+            
+        if ($isAjax) {
+            return $this->config->out['main'];
+        }
+
         return $this->render();
     }
 }

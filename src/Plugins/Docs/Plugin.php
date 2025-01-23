@@ -28,10 +28,20 @@ class Plugin extends BasePlugin
 
     public function execute(): string
     {
-        return match (true) {
+        $content = match (true) {
             isset($_GET['doc']) => $this->renderDocument($_GET['doc']),
             default => $this->renderDocumentList()
         };
+
+        // For AJAX requests, return only the content
+        if (
+            isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+            strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'
+        ) {
+            return $content;
+        }
+
+        return $content;
     }
 
     private function css(): string
@@ -67,31 +77,22 @@ class Plugin extends BasePlugin
            .markdown-body {
                box-sizing: border-box;
                 min-width: 200px;
-                /* max-width: 980px; */
                 margin: 0 auto;
-                /* padding: 45px; */
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial,
                     sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
             }
             .markdown-body pre {
-                padding: 16px;
+                padding: 1rem;
                 overflow: auto;
-                /* font-size: 95%; */
                 line-height: 1.45;
                 background-color: #f6f8fa;
-                border-radius: 6px;
+                border-radius: 0.5rem;
             }
             .markdown-body code:not(pre code) {
                 padding: 0.2em 0.4em;
                 margin: 0;
-                /* font-size: 85%; */
                 background-color: rgba(27, 31, 35, 0.05);
-                border-radius: 6px;
-            }
-            @media (max-width: 767px) {
-                .markdown-body {
-                    padding: 15px;
-                }
+                border-radius: 0.5rem;
             }
             </style>';
     }
@@ -156,7 +157,7 @@ class Plugin extends BasePlugin
         $title = ucwords(str_replace(['_', '-'], ' ', preg_replace('/^\d+[_-]/', '', $name)));
 
         return sprintf(
-            '<a href="?plugin=docs&doc=%s" class="list-group-item list-group-item-action">
+            '<a href="?plugin=docs&doc=%s" class="list-group-item list-group-item-action doc-link">
                 %s
             </a>',
             urlencode($urlName),

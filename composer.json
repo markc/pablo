@@ -20,7 +20,8 @@
         }
     ],
     "require": {
-        "php": ">=8.4"
+        "php": ">=8.4",
+        "league/commonmark": "^2.4"
     },
     "scripts": {
         "test": "phpunit"

@@ -58,13 +58,9 @@ class Theme extends BaseTheme
         </div>
         <div class="main-content" id="main">
             <div class="container-fluid">
-                <div class="row">
-                    <main class="col-md-12">
-                        <div class="content-section" id="content-section">
-                            {$mainContent}
-                        </div>
-                    </main>
-                </div>
+                <main class="content-section" id="content-section">
+                    {$mainContent}
+                </main>
             </div>
         </div>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
@@ -75,3 +71,17 @@ class Theme extends BaseTheme
     HTML;
     }
 }
+
+/*
+        <div class="main-content" id="main">
+            <div class="container-fluid">
+                <div class="row">
+                    <main class="col-md-12">
+                        <div class="content-section" id="content-section">
+                            {$mainContent}
+                        </div>
+                    </main>
+                </div>
+            </div>
+        </div>
+*/

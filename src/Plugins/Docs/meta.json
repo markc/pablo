@@ -1,0 +1,7 @@
+{
+    "name": "Documentation",
+    "description": "View markdown documentation files",
+    "icon": "bi bi-file-text fw",
+    "order": 3,
+    "sidebar": "right"
+}

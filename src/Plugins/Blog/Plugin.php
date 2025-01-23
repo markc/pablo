@@ -103,11 +103,16 @@ class Plugin extends BasePlugin
                 throw new \RuntimeException('Invalid request data');
             }
 
+            $excerpt = $data['excerpt'] ?? '';
+            if (empty($excerpt)) {
+                $excerpt = substr(strip_tags($data['content']), 0, 150) . '...';
+            }
+
             $stmt = $this->db->prepare('INSERT INTO posts (title, content, excerpt, created_at) VALUES (:title, :content, :excerpt, :created_at)');
             $stmt->execute([
                 ':title' => $data['title'],
                 ':content' => $data['content'],
-                ':excerpt' => substr(strip_tags($data['content']), 0, 150) . '...',
+                ':excerpt' => $excerpt,
                 ':created_at' => date('Y-m-d H:i:s')
             ]);
 
@@ -142,12 +147,17 @@ class Plugin extends BasePlugin
                 throw new \RuntimeException('Invalid request data');
             }
 
+            $excerpt = $data['excerpt'] ?? '';
+            if (empty($excerpt)) {
+                $excerpt = substr(strip_tags($data['content']), 0, 150) . '...';
+            }
+
             $stmt = $this->db->prepare('UPDATE posts SET title = :title, content = :content, excerpt = :excerpt WHERE id = :id');
             $stmt->execute([
                 ':id' => $id,
                 ':title' => $data['title'],
                 ':content' => $data['content'],
-                ':excerpt' => substr(strip_tags($data['content']), 0, 150) . '...'
+                ':excerpt' => $excerpt
             ]);
 
             if ($stmt->rowCount() === 0) {
@@ -224,6 +234,10 @@ class Plugin extends BasePlugin
                                 <div class="mb-3">
                                     <label for="postContent" class="form-label">Content</label>
                                     <textarea class="form-control" id="postContent" rows="10" required></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="postExcerpt" class="form-label">Excerpt</label>
+                                    <textarea class="form-control" id="postExcerpt" rows="2"></textarea>
                                 </div>
                             </form>
                         </div>
@@ -307,6 +321,7 @@ class Plugin extends BasePlugin
             const postForm = document.getElementById('postForm');
             const postTitle = document.getElementById('postTitle');
             const postContent = document.getElementById('postContent');
+            const postExcerpt = document.getElementById('postExcerpt');
             const modalTitle = document.getElementById('postModalLabel');
             const addPostBtn = document.getElementById('addPost');
 
@@ -316,6 +331,7 @@ class Plugin extends BasePlugin
                 modalTitle.textContent = 'Add New Post';
                 postTitle.value = '';
                 postContent.value = '';
+                postExcerpt.value = '';
                 postModal.show();
             });
 
@@ -416,6 +432,7 @@ class Plugin extends BasePlugin
                     modalTitle.textContent = 'Edit Post';
                     postTitle.value = post.title;
                     postContent.value = post.content;
+                    postExcerpt.value = post.excerpt;
                     postModal.show();
                 } catch (error) {
                     console.error('Error loading post for edit:', error);
@@ -441,7 +458,8 @@ class Plugin extends BasePlugin
                         },
                         body: JSON.stringify({
                             title: postTitle.value,
-                            content: postContent.value
+                            content: postContent.value,
+                            excerpt: postExcerpt.value
                         })
                     });
 
@@ -661,7 +679,7 @@ class Plugin extends BasePlugin
             $sortDirection = strtoupper($_GET['direction'] ?? 'ASC');
 
             // Build query
-            $query = 'SELECT id, title, excerpt, created_at FROM posts';
+            $query = 'SELECT id, title, CASE WHEN excerpt = "" OR excerpt IS NULL THEN substr(content, 1, 150) || "..." ELSE excerpt END as excerpt, created_at FROM posts';
             $params = [];
 
             if ($search !== '') {
@@ -670,7 +688,7 @@ class Plugin extends BasePlugin
             }
 
             // Get total count for pagination
-            $countQuery = str_replace('SELECT id, title, excerpt, created_at', 'SELECT COUNT(*)', $query);
+            $countQuery = str_replace('SELECT id, title, CASE WHEN excerpt = "" OR excerpt IS NULL THEN substr(content, 1, 150) || "..." ELSE excerpt END as excerpt, created_at', 'SELECT COUNT(*)', $query);
             $stmt = $this->db->prepare($countQuery);
             $stmt->execute($params);
             $total = $stmt->fetchColumn();

@@ -8,6 +8,7 @@ namespace Markc\Pablo\Plugins\Blog;
 
 use Markc\Pablo\Core\Plugin as BasePlugin;
 use PDO;
+use DateTimeImmutable;
 
 class Plugin extends BasePlugin
 {
@@ -21,6 +22,13 @@ class Plugin extends BasePlugin
         error_log('Blog Plugin: Database path = ' . self::DB_PATH);
         $this->initializeDatabase();
         error_log('Blog Plugin: Initialization complete');
+    }
+
+    private function formatFriendlyDate(
+        DateTimeImmutable $date,
+        string $locale = 'en_US'
+    ): string {
+        return $date->format('M j, Y g:i a');
     }
 
     private function initializeDatabase(): void
@@ -277,11 +285,11 @@ class Plugin extends BasePlugin
                 <table id="blog-table" class="table table-striped">
                     <thead>
                         <tr>
-                            <th data-sort="id">ID</th>
                             <th data-sort="title">Title</th>
                             <th data-sort="excerpt">Excerpt</th>
                             <th data-sort="created_at">Created</th>
-                            <th>Actions</th>
+                            <th></th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -364,20 +372,21 @@ class Plugin extends BasePlugin
                     tableBody.innerHTML = '';
                     data.data.forEach(post => {
                         const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>\${post.id}</td>
-                            <td class="post-title" data-id="\${post.id}">\${post.title}</td>
-                            <td>\${post.excerpt}</td>
-                            <td>\${post.created_at}</td>
-                            <td>
-                                <button class="btn btn-link text-success edit-post" data-id="\${post.id}">
-                                    <i class="bi bi-pencil-square"></i>
-                                </button>
-                                <button class="btn btn-link text-danger delete-post" data-id="\${post.id}">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </td>
-                        `;
+                        row.setAttribute('data-id', post.id);
+                        row.innerHTML = 
+                            '<td class="post-title">' + post.title + '</td>' +
+                            '<td>' + post.excerpt + '</td>' +
+                            '<td>' + post.created_at + '</td>' +
+                            '<td>' +
+                                '<button class="btn btn-link text-success edit-post" data-id="' + post.id + '">' +
+                                    '<i class="bi bi-pencil-square"></i>' +
+                                '</button>' +
+                            '</td>' +
+                            '<td>' +
+                                '<button class="btn btn-link text-danger delete-post" data-id="' + post.id + '">' +
+                                    '<i class="bi bi-trash"></i>' +
+                                '</button>' +
+                            '</td>';
 
                         // Add click handlers
                         const titleCell = row.querySelector('.post-title');
@@ -666,6 +675,10 @@ class Plugin extends BasePlugin
                     throw new \RuntimeException('Post not found');
                 }
 
+                // Format the date
+                $date = new DateTimeImmutable($post['created_at']);
+                $post['created_at'] = $this->formatFriendlyDate($date);
+
                 header('Content-Type: application/json');
                 echo json_encode($post);
                 exit;
@@ -702,6 +715,12 @@ class Plugin extends BasePlugin
             $stmt = $this->db->prepare($query);
             $stmt->execute($params);
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Format dates
+            foreach ($data as &$row) {
+                $date = new DateTimeImmutable($row['created_at']);
+                $row['created_at'] = $this->formatFriendlyDate($date);
+            }
 
             $pages = ceil($total / $perPage);
 

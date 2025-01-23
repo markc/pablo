@@ -11,7 +11,7 @@ use PDO;
 
 class Plugin extends BasePlugin
 {
-    private const DB_PATH = ROOT . '/db/blog.sqlite';
+    private const DB_PATH = __DIR__ . '/blog.sqlite';
     private ?PDO $db = null;
 
     public function __construct($theme)
@@ -51,7 +51,7 @@ class Plugin extends BasePlugin
             }
 
             // Initialize schema
-            $schemaPath = ROOT . '/db/init_blog.sql';
+            $schemaPath = __DIR__ . '/blog.sql';
             if (!file_exists($schemaPath)) {
                 throw new \RuntimeException('Schema file not found: ' . $schemaPath);
             }

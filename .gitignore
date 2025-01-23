@@ -6,6 +6,7 @@ db/*
 node_modules/
 .php-cs-cache
 .phpunit.result.cache
+*.sqlite
 Thumbs.db
 /vendor/
 .vscode/

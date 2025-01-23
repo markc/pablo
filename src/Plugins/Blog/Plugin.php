@@ -86,33 +86,82 @@ class Plugin extends BasePlugin
     {
         $html = <<<HTML
         <div class="container">
-            <h1>Blog Posts</h1>
-            <div class="row mb-3">
-                <div class="col">
+            <div id="blog-list">
+                <h1>Blog Posts</h1>
+                <div class="mb-3">
                     <input type="text" id="blog-search" class="form-control" placeholder="Search...">
                 </div>
+                <table id="blog-table" class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th data-sort="id">ID</th>
+                            <th data-sort="title">Title</th>
+                            <th data-sort="excerpt">Excerpt</th>
+                            <th data-sort="created_at">Created</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <nav>
+                    <ul class="pagination" id="blog-pagination"></ul>
+                </nav>
             </div>
-            <table id="blog-table" class="table table-striped">
-                <thead>
-                    <tr>
-                        <th data-sort="id">ID</th>
-                        <th data-sort="title">Title</th>
-                        <th data-sort="excerpt">Excerpt</th>
-                        <th data-sort="created_at">Created At</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-            <div class="row">
-                <div class="col">
-                    <nav>
-                        <ul class="pagination" id="blog-pagination"></ul>
-                    </nav>
-                </div>
-            </div>
+            <div id="blog-content" class="mt-3" style="display: none;"></div>
         </div>
         <script>
-        function initializeBlogTable() {
+        // Initialize blog functionality
+        function initializeBlog() {
+            // Get CSRF token from meta tag
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            if (!csrfToken) {
+                console.error('CSRF token not found');
+                document.getElementById('blog-content').innerHTML = `
+                    <div class="alert alert-danger">Error: CSRF token not found.</div>
+                `;
+                return;
+            }
+
+            // Load post content
+            async function loadPost(id) {
+                try {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('api', 'data');
+                    url.searchParams.set('id', id.toString());
+
+                    const response = await fetch(url, {
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('HTTP error! status: ' + response.status);
+                    }
+
+                    const post = await response.json();
+                    const contentDiv = document.getElementById('blog-content');
+                    const listDiv = document.getElementById('blog-list');
+                    
+                    // Hide list and show content
+                    listDiv.style.display = 'none';
+                    contentDiv.style.display = 'block';
+                    
+                    contentDiv.innerHTML = `
+                        <h2>\${post.title}</h2>
+                        <div class="text-muted mb-3">Posted on \${post.created_at}</div>
+                        <div class="blog-content">\${post.content}</div>
+                    `;
+                } catch (error) {
+                    console.error('Error loading post:', error);
+                    document.getElementById('blog-content').innerHTML = `
+                        <div class="alert alert-danger">Error loading post content.</div>
+                    `;
+                }
+            }
+
+            function initializeBlogTable() {
             console.log('Blog table initialization starting...');
             let currentPage = 1;
             let currentSort = 'id';
@@ -120,13 +169,6 @@ class Plugin extends BasePlugin
             const searchInput = document.getElementById('blog-search');
             const tableBody = document.querySelector('#blog-table tbody');
             const pagination = document.getElementById('blog-pagination');
-
-            // Get CSRF token from meta tag
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            if (!csrfToken) {
-                console.error('CSRF token not found');
-                return;
-            }
 
             // Load data function
             async function loadData() {
@@ -139,35 +181,32 @@ class Plugin extends BasePlugin
                 url.searchParams.set('direction', currentDirection);
 
                 try {
-                    console.log('Request URL:', url.toString());
-                    console.log('CSRF Token:', csrfToken);
-                    
                     const response = await fetch(url, {
                         headers: {
                             'X-CSRF-TOKEN': csrfToken,
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
                         }
                     });
                     
                     if (!response.ok) {
-                        const text = await response.text();
-                        console.error('Response:', text);
-                        throw new Error('HTTP error! status: ' + response.status + ', body: ' + text);
+                        throw new Error('HTTP error! status: ' + response.status);
                     }
                     
                     const data = await response.json();
-                    console.log('Response data:', data);
                     
                     // Clear and populate table
                     tableBody.innerHTML = '';
                     data.data.forEach(post => {
                         const row = document.createElement('tr');
+                        row.style.cursor = 'pointer';
                         row.innerHTML = `
                             <td>\${post.id}</td>
-                            <td>\${post.title}</td>
+                            <td class="post-title" data-id="\${post.id}">\${post.title}</td>
                             <td>\${post.excerpt}</td>
                             <td>\${post.created_at}</td>
                         `;
+                        row.onclick = () => loadPost(post.id);
                         tableBody.appendChild(row);
                     });
 
@@ -253,8 +292,12 @@ class Plugin extends BasePlugin
             console.log('Blog table initialization complete');
         }
 
-        // Initialize immediately
-        initializeBlogTable();
+            // Initialize table
+            initializeBlogTable();
+        }
+
+        // Start initialization
+        initializeBlog();
         </script>
         HTML;
 
@@ -275,29 +318,40 @@ class Plugin extends BasePlugin
                 ob_end_clean();
             }
 
-            error_log('Blog Plugin: API request received');
-            error_log('Blog Plugin: Request headers - ' . json_encode(getallheaders()));
+            // Check if requesting a single post
+            if (isset($_GET['id'])) {
+                $id = (int) $_GET['id'];
+                $stmt = $this->db->prepare('SELECT * FROM posts WHERE id = :id');
+                $stmt->execute([':id' => $id]);
+                $post = $stmt->fetch(PDO::FETCH_ASSOC);
 
+                if (!$post) {
+                    throw new \RuntimeException('Post not found');
+                }
+
+                header('Content-Type: application/json');
+                echo json_encode($post);
+                exit;
+            }
+
+            // Handle list request
             $page = (int) ($_GET['page'] ?? 1);
             $perPage = 10;
             $search = $_GET['search'] ?? '';
             $sortColumn = $_GET['sort'] ?? 'id';
             $sortDirection = strtoupper($_GET['direction'] ?? 'ASC');
 
-            error_log("Blog Plugin: Request params - page=$page, perPage=$perPage, search=$search, sort=$sortColumn, direction=$sortDirection");
-
             // Build query
-            $query = 'SELECT * FROM posts';
+            $query = 'SELECT id, title, excerpt, created_at FROM posts';
             $params = [];
 
             if ($search !== '') {
-                error_log('Blog Plugin: Adding search condition');
-                $query .= ' WHERE title LIKE :search OR excerpt LIKE :search';
+                $query .= ' WHERE title LIKE :search';
                 $params[':search'] = "%$search%";
             }
 
             // Get total count for pagination
-            $countQuery = str_replace('SELECT *', 'SELECT COUNT(*)', $query);
+            $countQuery = str_replace('SELECT id, title, excerpt, created_at', 'SELECT COUNT(*)', $query);
             $stmt = $this->db->prepare($countQuery);
             $stmt->execute($params);
             $total = $stmt->fetchColumn();
@@ -308,14 +362,11 @@ class Plugin extends BasePlugin
             $params[':limit'] = $perPage;
             $params[':offset'] = ($page - 1) * $perPage;
 
-            error_log("Blog Plugin: Executing query: $query");
             $stmt = $this->db->prepare($query);
             $stmt->execute($params);
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             $pages = ceil($total / $perPage);
-
-            error_log("Blog Plugin: Query results - total=$total, pages=$pages");
 
             $result = [
                 'data' => $data,

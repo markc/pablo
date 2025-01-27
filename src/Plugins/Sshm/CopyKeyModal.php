@@ -1,6 +1,6 @@
 <?php
 
-namespace Plugins\Sshm;
+namespace Markc\Pablo\Plugins\Sshm;
 
 class CopyKeyModal
 {

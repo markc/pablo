@@ -1,15 +1,111 @@
 <?php
 
+namespace Markc\Pablo\Plugins\Sshm;
+
 class DataTablesRenderer
 {
     public function render(): string
     {
         $html = <<<HTML
         <div class="container">
+            <ul class="nav nav-tabs mb-3" id="sshTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="hosts-tab" data-bs-toggle="tab" data-bs-target="#hosts" type="button" role="tab" aria-controls="hosts" aria-selected="true">SSH Hosts</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="keys-tab" data-bs-toggle="tab" data-bs-target="#keys" type="button" role="tab" aria-controls="keys" aria-selected="false">SSH Keys</button>
+                </li>
+            </ul>
+            
+            <div class="tab-content" id="sshTabsContent">
+                <div class="tab-pane fade show active" id="hosts" role="tabpanel" aria-labelledby="hosts-tab">
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#hostModal">
+                            Add Host
+                        </button>
+                    </div>
+                    <table id="hostsTable" class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Hostname</th>
+                                <th>Port</th>
+                                <th>Username</th>
+                                <th>Identity File</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <div class="tab-pane fade" id="keys" role="tabpanel" aria-labelledby="keys-tab">
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#keyModal">
+                            Create Key
+                        </button>
+                    </div>
+                    <table id="keysTable" class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Public Key</th>
+                                <th>Comment</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
             {$this->renderHostModal()}
             {$this->renderKeyModal()}
             {$this->renderCopyKeyModal()}
             {$this->renderDeleteModal()}
+
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Initialize DataTables
+                const hostsTable = $('#hostsTable').DataTable({
+                    ajax: '?api=data&type=hosts',
+                    columns: [
+                        { data: 'name' },
+                        { data: 'hostname' },
+                        { data: 'port' },
+                        { data: 'username' },
+                        { data: 'identity_file' },
+                        {
+                            data: null,
+                            render: function(data, type, row) {
+                                return `
+                                    <button class="btn btn-sm btn-primary edit-host" data-id="\${row.id}">Edit</button>
+                                    <button class="btn btn-sm btn-danger delete-host" data-id="\${row.id}">Delete</button>
+                                `;
+                            }
+                        }
+                    ]
+                });
+
+                const keysTable = $('#keysTable').DataTable({
+                    ajax: '?api=data&type=keys',
+                    columns: [
+                        { data: 'name' },
+                        { data: 'public_key' },
+                        { data: 'comment' },
+                        {
+                            data: null,
+                            render: function(data, type, row) {
+                                return `
+                                    <button class="btn btn-sm btn-primary copy-key" data-id="\${row.id}">Copy</button>
+                                    <button class="btn btn-sm btn-danger delete-key" data-id="\${row.id}">Delete</button>
+                                `;
+                            }
+                        }
+                    ]
+                });
+            });
+            </script>
         </div>
         HTML;
 
@@ -18,140 +114,21 @@ class DataTablesRenderer
 
     private function renderHostModal(): string
     {
-        return <<<HTML
-        <div class="modal fade" id="hostModal" tabindex="-1" aria-labelledby="hostModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="hostModalLabel">Add Host</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="hostForm">
-                            <div class="mb-3">
-                                <label for="hostName" class="form-label">Name</label>
-                                <input type="text" class="form-control" id="hostName" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="hostHostname" class="form-label">Hostname</label>
-                                <input type="text" class="form-control" id="hostHostname" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="hostPort" class="form-label">Port</label>
-                                <input type="text" class="form-control" id="hostPort" value="22">
-                            </div>
-                            <div class="mb-3">
-                                <label for="hostUsername" class="form-label">Username</label>
-                                <input type="text" class="form-control" id="hostUsername" value="root">
-                            </div>
-                            <div class="mb-3">
-                                <label for="hostIdentityFile" class="form-label">Identity File</label>
-                                <input type="text" class="form-control" id="hostIdentityFile">
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" id="saveHost">Save</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        HTML;
+        return (new HostModal())->render();
     }
 
     private function renderKeyModal(): string
     {
-        return <<<HTML
-        <div class="modal fade" id="keyModal" tabindex="-1" aria-labelledby="keyModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="keyModalLabel">Create SSH Key</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="keyForm">
-                            <div class="mb-3">
-                                <label for="keyName" class="form-label">Name</label>
-                                <input type="text" class="form-control" id="keyName" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="keyComment" class="form-label">Comment</label>
-                                <input type="text" class="form-control" id="keyComment">
-                            </div>
-                            <div class="mb-3">
-                                <label for="keyPassword" class="form-label">Password (optional)</label>
-                                <input type="password" class="form-control" id="keyPassword">
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" id="saveKey">Create</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        HTML;
+        return (new KeyModal())->render();
     }
 
     private function renderCopyKeyModal(): string
     {
-        return <<<HTML
-        <div class="modal fade" id="copyKeyModal" tabindex="-1" aria-labelledby="copyKeyModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="copyKeyModalLabel">Copy Key to Host</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="copyKeyForm">
-                            <div class="mb-3">
-                                <label for="copyKeySelect" class="form-label">Select Key</label>
-                                <select class="form-select" id="copyKeySelect" required></select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="copyHostSelect" class="form-label">Select Host</label>
-                                <select class="form-select" id="copyHostSelect" required></select>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" id="copyKey">Copy</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        HTML;
+        return (new CopyKeyModal())->render();
     }
 
     private function renderDeleteModal(): string
     {
-        return <<<HTML
-        <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        Are you sure you want to delete this item?
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-danger" id="confirmDelete">Delete</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        HTML;
+        return (new DeleteModal())->render();
     }
 }
-
-// Usage example:
-$renderer = new DataTablesRenderer();
-echo $renderer->render();

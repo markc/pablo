@@ -12,7 +12,7 @@ class Plugin extends BasePlugin
     private string $configDir;
     private \PDO $db;
 
-    public function __construct($theme)
+    public function __construct(\Markc\Pablo\Core\Theme $theme)
     {
         parent::__construct($theme);
         error_log('SSHM Plugin: Starting initialization');
@@ -47,95 +47,7 @@ class Plugin extends BasePlugin
 
     private function renderDataTables(): string
     {
-        $html = <<<HTML
-        <div class="container">
-            {$this->renderHostModal()}
-            {$this->renderKeyModal()}
-            {$this->renderCopyKeyModal()}
-            {$this->renderDeleteModal()}
-        </div>
-        HTML;
-
-        return $html;
-    }
-
-    private function renderHostModal(): string
-    {
-        return <<<HTML
-        <div class="modal fade" id="hostModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Host Configuration</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <!-- Host form fields will be dynamically populated -->
-                    </div>
-                </div>
-            </div>
-        </div>
-        HTML;
-    }
-
-    private function renderKeyModal(): string
-    {
-        return <<<HTML
-        <div class="modal fade" id="keyModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">SSH Key Management</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <!-- Key form fields will be dynamically populated -->
-                    </div>
-                </div>
-            </div>
-        </div>
-        HTML;
-    }
-
-    private function renderCopyKeyModal(): string
-    {
-        return <<<HTML
-        <div class="modal fade" id="copyKeyModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Copy SSH Key</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <!-- Copy key content will be dynamically populated -->
-                    </div>
-                </div>
-            </div>
-        </div>
-        HTML;
-    }
-
-    private function renderDeleteModal(): string
-    {
-        return <<<HTML
-        <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Confirm Delete</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>Are you sure you want to delete this item?</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-danger" id="confirmDelete">Delete</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        HTML;
+        $renderer = new DataTablesRenderer();
+        return $renderer->render();
     }
 }

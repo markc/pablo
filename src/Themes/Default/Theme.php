@@ -15,6 +15,21 @@ class Theme extends BaseTheme
         parent::__construct($config, $init);
     }
 
+    public function list(array $data): string
+    {
+        return '';
+    }
+
+    public function create(array $inputs): string
+    {
+        return '';
+    }
+
+    public function update(array $data): string
+    {
+        return '';
+    }
+
     public function render(): string
     {
         $appName = $this->config->cfg['app_name'];

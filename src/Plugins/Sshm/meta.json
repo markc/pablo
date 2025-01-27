@@ -1,0 +1,11 @@
+{
+    "name": "Sshm",
+    "description": "SSH Manager Plugin",
+    "version": "1.0.0",
+    "author": "Mark Constable <markc@renta.net>",
+    "license": "AGPL-3.0",
+    "url": "https://github.com/markc/pablo",
+    "requires": {
+        "php": ">=8.2.0"
+    }
+}

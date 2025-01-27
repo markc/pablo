@@ -19,15 +19,15 @@ final class Init
     public readonly array $pluginNav;
 
     public array $nav2 = [
-        'Remotes',        
+        'Remotes',
         [
             ['local',     '?o=remote&r=local',    'bi bi-globe fw'],
             ['mgo',       '?o=remote&r=mgo',      'bi bi-globe fw'],
-        ], 
+        ],
         'bi bi-list fw'
     ];
-    
-    public function __construct(Config $config) 
+
+    public function __construct(Config $config)
     {
         $this->validateEnvironment();
         $this->initializeSession();
@@ -37,36 +37,43 @@ final class Init
         $this->executePlugin();
     }
 
-    private function initializePluginNav(): void 
+    private function initializePluginNav(): void
     {
         $this->scanner = new PluginScanner();
         $this->pluginNav = $this->scanner->scanPlugins();
     }
 
-    private function initializeTheme(): void 
+    private function initializeTheme(): void
     {
         $themeType = $this->config->in['theme'] ?? 'Default';
-        $themeClass = "Markc\\Pablo\\Themes\\{$themeType}\\Theme";
-        
-        $this->theme = class_exists($themeClass) 
+        $pluginName = ucfirst(strtolower($this->config->in['plugin'] ?? 'Home'));
+
+        // Use Vhosts theme for Vhosts plugin
+        if ($pluginName === 'Vhosts') {
+            $themeClass = "Markc\\Pablo\\Themes\\{$themeType}\\Vhosts";
+        } else {
+            $themeClass = "Markc\\Pablo\\Themes\\{$themeType}\\Theme";
+        }
+
+        $this->theme = class_exists($themeClass)
             ? new $themeClass($this->config, $this)  // Pass $this to Theme
             : throw new \RuntimeException("Theme not found: {$themeClass}");
     }
 
-    private function validateEnvironment(): void 
+    private function validateEnvironment(): void
     {
         if (PHP_VERSION_ID < 80400) {
             throw new \RuntimeException('PHP 8.4 or higher is required');
         }
     }
 
-    private function initializeSession(): void 
+    private function initializeSession(): void
     {
         if (session_status() === PHP_SESSION_NONE) {
             session_start(
                 [
-                'cookie_httponly' => true,
-                'cookie_samesite' => 'Strict'
+                    'cookie_httponly' => true,
+                    'cookie_samesite' => 'Strict'
                 ]
             );
         }
@@ -78,7 +85,7 @@ final class Init
         $this->logDebugInfo();
     }
 
-    private function setupConfig(Config $config): void 
+    private function setupConfig(Config $config): void
     {
         $this->config = $config;
         $this->config->cfg['host'] ??= $_SERVER['HTTP_HOST'];
@@ -87,10 +94,10 @@ final class Init
         $this->config->sanitizeInput();
     }
 
-    private function executePlugin(): void 
+    private function executePlugin(): void
     {
         $pluginName = ucfirst(strtolower($this->config->in['plugin'] ?? 'Home'));
- 
+
         $pluginClass = "Markc\\Pablo\\Plugins\\{$pluginName}\\Plugin";
         if (!class_exists($pluginClass)) {
             throw new PluginNotFoundException("Plugin not found: {$pluginClass}");
@@ -106,22 +113,23 @@ final class Init
         }
 
         $this->config->out['main'] = (string)$plugin;
-        
+
         if (empty($this->config->in['partial'])) {
             $this->processThemeOutput();
         }
     }
-    
-    private function validateApiRequest(): void 
+
+    private function validateApiRequest(): void
     {
-        if (!isset($_SERVER['HTTP_X_CSRF_TOKEN'])  
+        if (
+            !isset($_SERVER['HTTP_X_CSRF_TOKEN'])
             || !hash_equals($_SESSION['csrf_token'], $_SERVER['HTTP_X_CSRF_TOKEN'])
         ) {
             throw new \RuntimeException('Invalid CSRF token');
         }
     }
 
-    private function processThemeOutput(): void 
+    private function processThemeOutput(): void
     {
         foreach ($this->config->out as $key => $value) {
             if (method_exists($this->theme, $key)) {
@@ -130,11 +138,11 @@ final class Init
         }
     }
 
-    public function __toString(): string 
+    public function __toString(): string
     {
         $format = $this->config->in['format'] ?? 'html';
-        
-        return match($format) {
+
+        return match ($format) {
             'text' => strip_tags($this->config->out['main']),
             'json' => $this->renderJson($this->config->out['main']),
             'partial' => $this->renderPartial($this->config->in['section'] ?? ''),
@@ -142,16 +150,16 @@ final class Init
         };
     }
 
-    private function renderJson(mixed $data): string 
+    private function renderJson(mixed $data): string
     {
         header('Content-Type: application/json');
         return json_encode(
-            $data, 
+            $data,
             JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
         );
     }
 
-    private function renderPartial(string $section): string 
+    private function renderPartial(string $section): string
     {
         if (empty($section) || !isset($this->config->out[$section])) {
             throw new \RuntimeException('Invalid partial section requested');
@@ -161,7 +169,7 @@ final class Init
         return $this->renderJson($this->config->out[$section]);
     }
 
-    private function logDebugInfo(): void 
+    private function logDebugInfo(): void
     {
         if ($_ENV['APP_DEBUG'] ?? false) {
             error_log(
@@ -176,7 +184,7 @@ final class Init
         }
     }
 
-    public function __destruct() 
+    public function __destruct()
     {
         if ($_ENV['APP_DEBUG'] ?? false) {
             error_log(

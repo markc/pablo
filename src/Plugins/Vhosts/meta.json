@@ -1,0 +1,10 @@
+{
+    "name": "Vhosts",
+    "description": "Virtual Hosts Management Plugin",
+    "version": "1.0.0",
+    "author": "Mark Constable",
+    "license": "AGPL-3.0",
+    "requires": {
+        "php": ">=8.4"
+    }
+}
